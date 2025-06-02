@@ -1,1 +1,3 @@
 # docker/.env # should be private
+server/node_modules
+.vscode

@@ -1,8 +1,12 @@
-# Start MySQL
+# How to start docker containers
 
 Make sure docker and sql deamons are up. Idk about windows so figure it out <3
 
 ---
+
+## If you don't have connection in MySQL
+
+I don't know if it is necessary but create new connection first.
 
 ## Create connection
 
@@ -13,13 +17,14 @@ Make sure docker and sql deamons are up. Idk about windows so figure it out <3
 * Username: root
 * Password: (check .env)
 
----
-## Start container
+The same data is used establishing connection on server side.
 
-* Start docker compose `docker-compose up -d`
-* If you want more info to debug or something use `docker-compose up --build`
+---
+## Start containers
+
+* Build and start containers, both __mysql-db__ and __node-app__ `docker-compose up --build`
 * Reset container `docker-compose down -v && docker-compose up -d`
-* Stop container `docker stop mysql-db`
+* Stop container `docker stop mysql-db`, or just `CTRL + C`
 
 ---
 
