@@ -127,12 +127,12 @@ button {
 }
 
 .export-btn {
-    background: var(--warning-color);
+    background: var(--purple-color);
     color: white;
 }
 
 .export-btn:hover {
-    background: var(--warning-hover);
+    background: var(--purple-hover);
     transform: translateY(-2px);
 }
 
