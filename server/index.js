@@ -1,18 +1,26 @@
-const mysql = require('mysql2/promise');
+const express = require('express');
+const { sequelize, Country, AppUser, syncModels } = require('./models');
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  waitForConnections: true,
-  connectionLimit: 10
+const app = express();
+
+
+const PORT = process.env.SERVER_PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Server works on port: ${PORT}`);
 });
 
-async function testConnection() {
-  const [rows] = await pool.query('SELECT * FROM COUNTRY');
-  console.log('Countries:', rows);
-}
 
-testConnection();
+// async function main() {
+//   await syncModels();
+
+//   const newUser = await AppUser.create({
+//     firstName: 'Jan',
+//     lastName: 'Kowalski',
+//     email: 'jan@example.com',
+//     password: 'secure123',
+//   });
+
+//   console.log('New user created:', newUser.toJSON());
+// }
+
+// main().catch(console.error);

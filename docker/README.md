@@ -23,8 +23,13 @@ The same data is used establishing connection on server side.
 ## Start containers
 
 * Build and start containers, both __mysql-db__ and __node-app__ `docker-compose up --build`
-* Reset container `docker-compose down -v && docker-compose up -d`
-* Stop container `docker stop mysql-db`, or just `CTRL + C`
+* Reset container `docker-compose down -v && docker-compose up`
+* Stop container `docker stop <container-name>`, or just `CTRL + C`
+
+---
+## Start one service
+
+* To start only MySQL container use `docker-compose up mysql`
 
 ---
 
