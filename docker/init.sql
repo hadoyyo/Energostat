@@ -1,6 +1,8 @@
 CREATE DATABASE IF NOT EXISTS energostat_db;
 USE energostat_db;
 
+-- //TODO: change countryId to countryCode CHAR(3)
+
 -- Table for storing country information
 CREATE TABLE IF NOT EXISTS COUNTRY (
     countryId INT AUTO_INCREMENT PRIMARY KEY,
@@ -14,9 +16,9 @@ CREATE TABLE IF NOT EXISTS APP_USER (
     lastName VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    country_id INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (country_id) REFERENCES COUNTRY(countryId)
+    countryId INT,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (countryId) REFERENCES COUNTRY(countryId)
 ) ENGINE = InnoDB;
 
 -- Initial data for COUNTRY table TOP 100 most populous countries
