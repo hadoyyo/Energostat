@@ -3,7 +3,8 @@ const sequelize = require('../config/database');
 
 const models = {
   AppUser: require('./AppUser')(sequelize),
-  Country: require('./Country')(sequelize)
+  Country: require('./Country')(sequelize),
+  EnergyData: require('./EnergyData')(sequelize)
 };
 
 // set relations

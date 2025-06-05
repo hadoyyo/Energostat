@@ -32,12 +32,12 @@ module.exports = (sequelize) => {
       allowNull: false,
       field: 'password'
     },
-    country_id: {
-      type: DataTypes.INTEGER,
+    countryId: {
+      type: DataTypes.STRING(3),
       allowNull: true,
       field: 'countryId'
     },
-    created_at: {
+    createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
       field: 'createdAt'
@@ -52,6 +52,10 @@ module.exports = (sequelize) => {
       foreignKey: 'countryId',
       as: 'country'
     });
+    AppUser.belongsTo(models.EnergyData, {
+      foreignKey: 'dataId',
+      as: 'data'
+    })
   };
 
   return AppUser;
