@@ -1,3 +1,4 @@
 # docker/.env # should be private
 server/node_modules
+react-app/node_modules
 .vscode

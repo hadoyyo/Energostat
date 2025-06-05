@@ -3,9 +3,8 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
   const Country = sequelize.define('Country', {
     countryId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(3),
       primaryKey: true,
-      autoIncrement: true,
       field: 'countryId'
     },
     countryName: {
@@ -13,6 +12,12 @@ module.exports = (sequelize) => {
       allowNull: false,
       unique: true,
       field: 'countryName'
+    },
+    flagCode: {
+      type: DataTypes.STRING(3),
+      allowNull: false,
+      unique: true,
+      field: 'flagCode'
     }
   }, {
     tableName: 'COUNTRY',
@@ -24,6 +29,10 @@ module.exports = (sequelize) => {
       foreignKey: 'countryId',
       as: 'users'
     });
+    Country.hasMany(models.EnergyData, {
+      foreignKey: 'countryId',
+      as: 'data'
+    })
   };
 
   return Country;
