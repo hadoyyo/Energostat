@@ -1,26 +1,26 @@
-const express = require('express');
-const { sequelize, Country, AppUser, syncModels } = require('./models');
+require('dotenv').config()
+const express = require('express')
+const app = express()
+const cors = require('cors')
 
-const app = express();
+require('./config/database')
+require('./models/index')
 
+const commonRoute = require('./routes/common')
+// const authorizedRoute = require('./routes/authorized')
 
-const PORT = process.env.SERVER_PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server works on port: ${PORT}`);
-});
+//middleware
+app.use(express.json())
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
+// routes
+app.use('/api/common', commonRoute)
+// app.use('/api/authorized', authorizedRoute)
 
-// async function main() {
-//   await syncModels();
-
-//   const newUser = await AppUser.create({
-//     firstName: 'Jan',
-//     lastName: 'Kowalski',
-//     email: 'jan@example.com',
-//     password: 'secure123',
-//   });
-
-//   console.log('New user created:', newUser.toJSON());
-// }
-
-// main().catch(console.error);
+const port = process.env.PORT || 8080
+app.listen(port, () => console.log(`Server is working on PORT: ${port}`))

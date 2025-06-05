@@ -35,12 +35,12 @@ module.exports = (sequelize) => {
     country_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      field: 'country_id'
+      field: 'countryId'
     },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-      field: 'created_at'
+      field: 'createdAt'
     }
   }, {
     tableName: 'APP_USER',
@@ -49,7 +49,7 @@ module.exports = (sequelize) => {
 
   AppUser.associate = function (models) {
     AppUser.belongsTo(models.Country, {
-      foreignKey: 'country_id',
+      foreignKey: 'countryId',
       as: 'country'
     });
   };
