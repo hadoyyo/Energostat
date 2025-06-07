@@ -1,14 +1,11 @@
 # How to start docker containers
 
-Make sure docker and sql deamons are up. Idk about windows so figure it out <3
+Make sure docker and sql daemons are up. Idk about windows so figure it out <3
 
----
-
-## If you don't have connection in MySQL
-
-I don't know if it is necessary but create new connection first.
 
 ## Create connection
+
+It is not necessary but makes debugging easier.
 
 * Connection name: (e.g. energostat)
 * Connection method: Standard __TCP/IP__
@@ -17,20 +14,16 @@ I don't know if it is necessary but create new connection first.
 * Username: root
 * Password: (check .env)
 
-The same data is used establishing connection on server side.
+## Start whole service
+
+The best solution so far is to manually start containers in right order, which is: __mysql -> server -> client__.
+
+_Make sure that previous action is finished before starting the next service. For example test if you can connect to DB using MySQL Workbench before starting server._
+
+* Start __mysql__ `docker-composer up mysql`
+* Start __server__ `docker-composer up server`
+* Start __client__ `docker-compose up client`
+
+Database is saved by default if you want to have a clean start use `docker-compose down -v` before starting __mysql__.
 
 ---
-## Start containers
-
-* Build and start containers, both __mysql-db__ and __node-app__ `docker-compose up --build`
-* Reset container `docker-compose down -v && docker-compose up`
-* Stop container `docker stop <container-name>`, or just `CTRL + C`
-
----
-## Start one service
-
-* To start only MySQL container use `docker-compose up mysql`
-
----
-
-_Should work_ ( ͡° ͜ʖ ͡°)
