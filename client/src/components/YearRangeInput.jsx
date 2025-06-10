@@ -7,7 +7,7 @@ export default function YearRangeInput({
   return (
     <div className="input-range">
       <div className="input-group">
-        <label htmlFor="start-year">Start Year:</label>
+        <label htmlFor="start-year">From:</label>
         <input 
           type="number" 
           id="start-year" 
@@ -19,7 +19,7 @@ export default function YearRangeInput({
       </div>
       
       <div className="input-group">
-        <label htmlFor="end-year">End Year:</label>
+        <label htmlFor="end-year">To:</label>
         <input 
           type="number" 
           id="end-year" 

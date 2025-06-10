@@ -16,11 +16,12 @@ CREATE TABLE IF NOT EXISTS APP_USER (
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     countryId VARCHAR(3),
+    dataId INT, -- just an integer for now
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (countryId) REFERENCES COUNTRY(countryId)
 ) ENGINE = InnoDB;
 
--- ENERGY_DATA table
+
 CREATE TABLE IF NOT EXISTS ENERGY_DATA (
     dataId INT AUTO_INCREMENT PRIMARY KEY,
     year VARCHAR(4) NOT NULL,
@@ -29,10 +30,16 @@ CREATE TABLE IF NOT EXISTS ENERGY_DATA (
     energyConsumption FLOAT NOT NULL,
     energyPerCapita FLOAT NOT NULL,
     countryId VARCHAR(3),
-    userId INT,
-    FOREIGN KEY (countryId) REFERENCES COUNTRY(countryId),
-    FOREIGN KEY (userId) REFERENCES APP_USER(userId)
+    userId INT,  -- integer
+    FOREIGN KEY (countryId) REFERENCES COUNTRY(countryId)
 ) ENGINE = InnoDB;
+
+ALTER TABLE APP_USER
+ADD CONSTRAINT fk_user_data FOREIGN KEY (dataId) REFERENCES ENERGY_DATA(dataId);
+
+ALTER TABLE ENERGY_DATA
+ADD CONSTRAINT fk_energy_user FOREIGN KEY (userId) REFERENCES APP_USER(userId);
+
 
 -- Initial data for COUNTRY table TOP 100 most populous countries
 INSERT IGNORE INTO COUNTRY (countryId, countryName, flagCode) VALUES

@@ -15,6 +15,8 @@ import RegisterForm from './components/auth/RegisterForm'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import AuthRoute from './components/AuthRoute'
+import axios from 'axios'
+import { useAuth } from './contexts/AuthContext'
 
 function AppContent() {
   const [country, setCountry] = useState('USA')
@@ -23,6 +25,45 @@ function AppContent() {
   const [data, setData] = useState([])
   const [status, setStatus] = useState(null)
   const [hasData, setHasData] = useState(false)
+  const { user } = useAuth()
+
+  const checkDatabaseForData = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/authorized/energy-data`, {
+        params: {
+          countryId: country,
+          startYear,
+          endYear
+        },
+        withCredentials: true
+      });
+      
+      if (response.data.length > 0) {
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error checking database:', error);
+      return null;
+    }
+  };
+
+  const saveDataToDatabase = async (dataToSave) => {
+    try {
+      await axios.post(
+        'http://localhost:8080/api/authorized/energy-data',
+        {
+          countryId: country,
+          startYear,
+          endYear,
+          data: dataToSave
+        },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error('Error saving data to database:', error);
+    }
+  };
 
   const handleFetchData = async () => {
     if (startYear > endYear) {
@@ -31,12 +72,30 @@ function AppContent() {
     }
 
     try {
-      setStatus({ message: 'Fetching data...', type: 'info' })
+      setStatus({ message: 'Checking for existing data...', type: 'info' })
       
+      // First check if data exists in our database
+      const existingData = await checkDatabaseForData();
+      if (existingData) {
+        setData(existingData);
+        setHasData(existingData.length > 0);
+        setStatus({ message: 'Data loaded from database!', type: 'success' });
+        return;
+      }
+
+      setStatus({ message: 'Fetching data from external APIs...', type: 'info' })
+      
+      // If not in database, fetch from external APIs
       const populationData = await fetchPopulationData(country, startYear, endYear)
       const energyData = await fetchEnergyData(country, startYear, endYear)
       
       const combinedData = combineData(populationData, energyData)
+      
+      // Save to database
+      if (combinedData.length > 0 && user) {
+        await saveDataToDatabase(combinedData);
+      }
+      
       setData(combinedData)
       setHasData(combinedData.length > 0)
       setStatus({ message: 'Data loaded successfully!', type: 'success' })
@@ -110,7 +169,6 @@ function AppContent() {
   )
 }
 
-// client/src/App.js
 function App() {
   return (
     <Router>

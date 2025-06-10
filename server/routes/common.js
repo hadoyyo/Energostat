@@ -1,3 +1,4 @@
+// server/routes/common.js
 require('dotenv').config()
 const router = require('express').Router()
 const bcrypt = require('bcrypt')
@@ -5,6 +6,18 @@ const jwt = require('jsonwebtoken')
 const { generateToken } = require('../utils/auth')
 const { AppUser, Country } = require('../models')
 
+// Get all countries
+router.get('/countries', async (req, res) => {
+  try {
+    const countries = await Country.findAll({
+      order: [['countryName', 'ASC']]
+    });
+    res.status(200).json(countries);
+  } catch (error) {
+    console.error('/countries - ERROR:', error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 // test
 router.get('/test', async (req, res) => {
@@ -16,7 +29,6 @@ router.get('/test', async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error." })
   }
 })
-
 
 // create new account
 router.post('/register', async (req, res) => {
@@ -73,9 +85,18 @@ router.post('/register', async (req, res) => {
       countryId
     })
 
-    // TODO: remove newUser from response (it contains hashedPassword)
     console.log("/register - SUCCESS")
-    res.status(201).json({ success: true, message: "User created successfully.", user: newUser })
+    res.status(201).json({ 
+      success: true, 
+      message: "User created successfully.",
+      user: {
+        userId: newUser.userId,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        countryId: newUser.countryId
+      }
+    })
 
   } catch (error) {
     console.error("/register - ERROR:", error.message)

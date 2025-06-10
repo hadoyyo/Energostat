@@ -1,22 +1,33 @@
-import { useState } from 'react';
+// client/src/components/CountrySelector.jsx
+import { useState, useEffect } from 'react';
 import 'flag-icons/css/flag-icons.min.css';
-
-const countries = [
-  { code: 'USA', name: 'United States', flag: 'us' },
-  { code: 'CHN', name: 'China', flag: 'cn' },
-  { code: 'IND', name: 'India', flag: 'in' },
-  { code: 'JPN', name: 'Japan', flag: 'jp' },
-  { code: 'DEU', name: 'Germany', flag: 'de' },
-  { code: 'GBR', name: 'United Kingdom', flag: 'gb' },
-  { code: 'FRA', name: 'France', flag: 'fr' },
-  { code: 'BRA', name: 'Brazil', flag: 'br' },
-  { code: 'POL', name: 'Poland', flag: 'pl' },
-  { code: 'CAN', name: 'Canada', flag: 'ca' }
-];
+import axios from 'axios';
 
 export default function CountrySelector({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
-  const selectedCountry = countries.find(c => c.code === value) || countries[0];
+  const [countries, setCountries] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/common/countries');
+        setCountries(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  if (loading) {
+    return <div>Loading countries...</div>;
+  }
+
+  const selectedCountry = countries.find(c => c.countryId === value) || countries[0];
 
   return (
     <div className="input-group country-select-container">
@@ -26,19 +37,19 @@ export default function CountrySelector({ value, onChange }) {
           className="selected-option" 
           onClick={() => setIsOpen(!isOpen)}
         >
-          <span className={`fi fi-${selectedCountry.flag}`}></span> {selectedCountry.name}
+          <span className={`fi fi-${selectedCountry.flagCode.toLowerCase()}`}></span> {selectedCountry.countryName}
         </div>
         <div className="options">
           {countries.map(country => (
             <div 
-              key={country.code}
+              key={country.countryId}
               className="option"
               onClick={() => {
-                onChange(country.code);
+                onChange(country.countryId);
                 setIsOpen(false);
               }}
             >
-              <span className={`fi fi-${country.flag}`}></span> {country.name}
+              <span className={`fi fi-${country.flagCode.toLowerCase()}`}></span> {country.countryName}
             </div>
           ))}
         </div>
