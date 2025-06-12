@@ -119,7 +119,7 @@ export default function DataChart({ data }) {
 
   return (
     <div className="chart-container">
-      <h2>Energy Consumption Data</h2>
+      <h3>Energy Consumption Data</h3>
       <canvas ref={chartRef}></canvas>
     </div>
   );

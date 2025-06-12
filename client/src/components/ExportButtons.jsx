@@ -13,7 +13,7 @@ export default function ExportButtons({ data }) {
 
   return (
     <div className="export-options">
-      <h2>Export Data</h2>
+      <h3>Export Data</h3>
       <div className="export-buttons">
         <button onClick={handleExportJSON} className="export-btn">
           Export as JSON

@@ -2,7 +2,7 @@
 const express = require('express')
 const router = express.Router()
 const { verifyToken } = require('../utils/auth')
-const { AppUser, EnergyData, Country } = require('../models')
+const { AppUser, EnergyData, Country, SearchHistory } = require('../models')
 const Sequelize = require('sequelize');
 
 // middleware to verify token
@@ -26,6 +26,29 @@ router.use(async (req, res, next) => {
     res.status(401).json({ success: false, message: "Unauthorized" })
   }
 })
+
+// Get user's search history
+router.get('/search-history', async (req, res) => {
+  try {
+    const history = await SearchHistory.findAll({
+      where: { userId: req.user.userId },
+      include: [
+        {
+          model: Country,
+          as: 'country',
+          attributes: ['countryName', 'flagCode']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
+
+    res.status(200).json(history);
+  } catch (error) {
+    console.error('/authorized/search-history - ERROR:', error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 // Get energy data for specific country and year range
 router.get('/energy-data', async (req, res) => {
@@ -95,6 +118,14 @@ router.post('/energy-data', async (req, res) => {
         energyPerCapita: item.energyPerCapitaMWh
       })
     ));
+
+    // Save search history
+    await SearchHistory.create({
+      countryId,
+      startYear,
+      endYear,
+      userId
+    });
 
     res.status(201).json({ 
       success: true, 

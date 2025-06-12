@@ -17,6 +17,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AuthRoute from './components/AuthRoute'
 import axios from 'axios'
 import { useAuth } from './contexts/AuthContext'
+import SearchHistory from './components/SearchHistory'
 
 function AppContent() {
   const [country, setCountry] = useState('USA')
@@ -25,6 +26,7 @@ function AppContent() {
   const [data, setData] = useState([])
   const [status, setStatus] = useState(null)
   const [hasData, setHasData] = useState(false)
+  const [refreshHistory, setRefreshHistory] = useState(false)
   const { user } = useAuth()
 
   const checkDatabaseForData = async () => {
@@ -80,6 +82,7 @@ function AppContent() {
         setData(existingData);
         setHasData(existingData.length > 0);
         setStatus({ message: 'Data loaded from database!', type: 'success' });
+        setRefreshHistory(prev => !prev);
         return;
       }
 
@@ -99,11 +102,19 @@ function AppContent() {
       setData(combinedData)
       setHasData(combinedData.length > 0)
       setStatus({ message: 'Data loaded successfully!', type: 'success' })
+      setRefreshHistory(prev => !prev);
     } catch (error) {
       console.error('Error:', error)
       setStatus({ message: `Error: ${error.message}`, type: 'error' })
       setHasData(false)
     }
+  };
+
+  const handleSelectSearch = (search) => {
+    setCountry(search.country);
+    setStartYear(search.startYear);
+    setEndYear(search.endYear);
+    handleFetchData();
   };
 
   const combineData = (populationData, energyData) => {
@@ -135,36 +146,46 @@ function AppContent() {
         <p className="subtitle">Compare energy usage with population statistics across countries and years</p>
       </header>
       
-      <div className="controls">
-        <CountrySelector 
-          value={country} 
-          onChange={setCountry} 
-        />
-        
-        <YearRangeInput 
-          startYear={startYear}
-          endYear={endYear}
-          onStartYearChange={setStartYear}
-          onEndYearChange={setEndYear}
-        />
-        
-        <button 
-          className="primary-btn" 
-          onClick={handleFetchData}
-        >
-          Fetch Data
-        </button>
-      </div>
+      <div className="app-content">
+        {user && <SearchHistory onSelectSearch={handleSelectSearch}
+          refreshTrigger={refreshHistory}/>}
+        <div className="controls-section">
+          <h3>Search</h3>
+          <div className="controls">
+            <CountrySelector 
+              value={country} 
+              onChange={setCountry} 
+            />
+            
+            <YearRangeInput 
+              startYear={startYear}
+              endYear={endYear}
+              onStartYearChange={setStartYear}
+              onEndYearChange={setEndYear}
+            />
+            
+            <button 
+              className="primary-btn" 
+              onClick={handleFetchData}
+            >
+              Fetch Data
+            </button>
+          </div>
 
-      <StatusMessage status={status} />
-      
-      {hasData && (
-        <>
-          <DataChart data={data} />
-          <DataTable data={data} />
-          <ExportButtons data={data} />
-        </>
-      )}
+        </div>
+
+        <div className="results-section">
+          <StatusMessage status={status} />
+          
+          {hasData && (
+            <>
+              <DataChart data={data} />
+              <DataTable data={data} />
+              <ExportButtons data={data} />
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

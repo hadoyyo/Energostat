@@ -26,7 +26,7 @@ export default function DataTable({ data }) {
 
   return (
     <div className="data-display">
-      <h2>Data Table</h2>
+      <h3>Data Table</h3>
       <div className="table-container">
         <table id="data-table">
           <thead>
