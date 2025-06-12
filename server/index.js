@@ -1,16 +1,19 @@
+// server/index.js
 require('dotenv').config()
 const express = require('express')
 const app = express()
 const cors = require('cors')
+const cookieParser = require('cookie-parser')
 
 require('./config/database')
 require('./models/index')
 
 const commonRoute = require('./routes/common')
-// const authorizedRoute = require('./routes/authorized')
+const authorizedRoute = require('./routes/authorized')
 
 //middleware
 app.use(express.json())
+app.use(cookieParser())
 app.use(cors({
   origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -20,7 +23,7 @@ app.use(cors({
 
 // routes
 app.use('/api/common', commonRoute)
-// app.use('/api/authorized', authorizedRoute)
+app.use('/api/authorized', authorizedRoute)
 
 const port = process.env.PORT || 8080
 app.listen(port, () => console.log(`Server is working on PORT: ${port}`))

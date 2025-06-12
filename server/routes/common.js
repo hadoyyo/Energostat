@@ -1,9 +1,23 @@
+// server/routes/common.js
 require('dotenv').config()
 const router = require('express').Router()
 const bcrypt = require('bcrypt')
-
+const jwt = require('jsonwebtoken')
+const { generateToken } = require('../utils/auth')
 const { AppUser, Country } = require('../models')
 
+// Get all countries
+router.get('/countries', async (req, res) => {
+  try {
+    const countries = await Country.findAll({
+      order: [['countryName', 'ASC']]
+    });
+    res.status(200).json(countries);
+  } catch (error) {
+    console.error('/countries - ERROR:', error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 
 // test
 router.get('/test', async (req, res) => {
@@ -15,7 +29,6 @@ router.get('/test', async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error." })
   }
 })
-
 
 // create new account
 router.post('/register', async (req, res) => {
@@ -72,13 +85,116 @@ router.post('/register', async (req, res) => {
       countryId
     })
 
-    // TODO: remove newUser from response (it contains hashedPassword)
     console.log("/register - SUCCESS")
-    res.status(201).json({ success: true, message: "User created successfully.", user: newUser })
+    res.status(201).json({ 
+      success: true, 
+      message: "User created successfully.",
+      user: {
+        userId: newUser.userId,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        countryId: newUser.countryId
+      }
+    })
 
   } catch (error) {
     console.error("/register - ERROR:", error.message)
     res.status(500).json({ success: false, message: "Internal server error.", error: error.message })
+  }
+})
+
+// login user
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    // check if user exists
+    const user = await AppUser.findOne({ where: { email } })
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" })
+    }
+
+    // check password
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" })
+    }
+
+    // generate token
+    const token = generateToken(user)
+
+    // set httpOnly cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 3600000 // 1 hour
+    })
+
+    console.log("/login - SUCCESS")
+    res.status(200).json({ 
+      success: true, 
+      message: "Login successful",
+      user: {
+        userId: user.userId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        countryId: user.countryId
+      }
+    })
+
+  } catch (error) {
+    console.error("/login - ERROR:", error.message)
+    res.status(500).json({ success: false, message: "Internal server error" })
+  }
+})
+
+// logout user
+router.post('/logout', async (req, res) => {
+  try {
+    res.clearCookie('token')
+    console.log("/logout - SUCCESS")
+    res.status(200).json({ success: true, message: "Logout successful" })
+  } catch (error) {
+    console.error("/logout - ERROR:", error.message)
+    res.status(500).json({ success: false, message: "Internal server error" })
+  }
+})
+
+// check auth status
+router.get('/check-auth', async (req, res) => {
+  try {
+    const token = req.cookies.token
+    if (!token) {
+      return res.status(200).json({ isAuthenticated: false })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await AppUser.findByPk(decoded.userId, {
+      attributes: { exclude: ['password'] },
+      include: [{ model: Country, as: 'country' }]
+    })
+
+    if (!user) {
+      return res.status(200).json({ isAuthenticated: false })
+    }
+
+    res.status(200).json({ 
+      isAuthenticated: true,
+      user: {
+        userId: user.userId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        countryId: user.countryId,
+        country: user.country
+      }
+    })
+  } catch (error) {
+    console.error("/check-auth - ERROR:", error.message)
+    res.status(200).json({ isAuthenticated: false })
   }
 })
 

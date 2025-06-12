@@ -2,10 +2,10 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY ./react-app/package*.json ./
+COPY ./client/package*.json ./
 RUN npm install
 
-COPY ./react-app .
+COPY ./client .
 
 EXPOSE 3000
 CMD ["npm", "start"]

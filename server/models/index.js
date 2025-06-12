@@ -1,10 +1,12 @@
+// server/models/index.js
 const Sequelize = require('sequelize');
 const sequelize = require('../config/database');
 
 const models = {
   AppUser: require('./AppUser')(sequelize),
   Country: require('./Country')(sequelize),
-  EnergyData: require('./EnergyData')(sequelize)
+  EnergyData: require('./EnergyData')(sequelize),
+  SearchHistory: require('./SearchHistory')(sequelize)
 };
 
 // set relations
