@@ -4,7 +4,6 @@ const router = express.Router()
 const { verifyToken } = require('../utils/auth')
 const { AppUser, EnergyData, Country, SearchHistory } = require('../models')
 const Sequelize = require('sequelize');
-const sequelize = require('../config/database')
 
 // middleware to verify token
 router.use(async (req, res, next) => {
@@ -55,24 +54,20 @@ router.get('/search-history', async (req, res) => {
 router.get('/energy-data', async (req, res) => {
   try {
     const { countryId, startYear, endYear } = req.query;
-    await sequelize.transaction(
-      { isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED },
-      async (t) => {
-        const data = await EnergyData.findAll({
-          where: {
-            countryId,
-            year: {
-              [Sequelize.Op.between]: [startYear, endYear]
-            }
-          },
-          order: [['year', 'ASC']],
-          include: [{
-            model: Country,
-            as: 'country'
-          }]
-        });
-      }
-    )
+    
+    const data = await EnergyData.findAll({
+      where: {
+        countryId,
+        year: {
+          [Sequelize.Op.between]: [startYear, endYear]
+        }
+      },
+      order: [['year', 'ASC']],
+      include: [{
+        model: Country,
+        as: 'country'
+      }]
+    });
 
     if (data.length === 0) {
       return res.status(404).json([]);
@@ -94,57 +89,51 @@ router.get('/energy-data', async (req, res) => {
   }
 });
 
-// Implements transaction isolation - serialization
+// Save energy data to database
 router.post('/energy-data', async (req, res) => {
-  const { countryId, startYear, endYear, data } = req.body;
-  const userId = req.user.userId;
-
   try {
-    await sequelize.transaction(
-      { isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE },
-      async (t) => {
-        // Delete existing data
-        await EnergyData.destroy({
-          where: {
-            countryId,
-            year: {
-              [Sequelize.Op.between]: [startYear, endYear]
-            },
-            userId
-          },
-          transaction: t
-        });
+    const { countryId, startYear, endYear, data } = req.body;
+    const userId = req.user.userId;
 
-        // Save new data
-        await Promise.all(data.map(item => {
-          return EnergyData.create({
-            year: item.year,
-            countryId,
-            userId,
-            population: item.population,
-            populationInMillions: item.populationInMillions,
-            energyConsumption: item.energyConsumptionTWh,
-            energyPerCapita: item.energyPerCapitaMWh
-          }, { transaction: t });
-        }));
-
-        // Add search history
-        await SearchHistory.create({
-          countryId,
-          startYear,
-          endYear,
-          userId
-        }, { transaction: t });
+    // First delete any existing data for this range to avoid duplicates
+    await EnergyData.destroy({
+      where: {
+        countryId,
+        year: {
+          [Sequelize.Op.between]: [startYear, endYear]
+        },
+        userId
       }
-    );
+    });
 
-    res.status(201).json({
-      success: true,
+    // Save new data
+    const savedData = await Promise.all(data.map(item => 
+      EnergyData.create({
+        year: item.year,
+        countryId,
+        userId,
+        population: item.population,
+        populationInMillions: item.populationInMillions,
+        energyConsumption: item.energyConsumptionTWh,
+        energyPerCapita: item.energyPerCapitaMWh
+      })
+    ));
+
+    // Save search history
+    await SearchHistory.create({
+      countryId,
+      startYear,
+      endYear,
+      userId
+    });
+
+    res.status(201).json({ 
+      success: true, 
       message: "Data saved successfully",
-      count: data.length
+      count: savedData.length
     });
   } catch (error) {
-    console.error('/authorized/energy-data - SERIALIZABLE ERROR:', error.message);
+    console.error('/authorized/energy-data - ERROR:', error.message);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
@@ -156,7 +145,7 @@ router.get('/user', async (req, res) => {
       attributes: { exclude: ['password'] },
       include: [{ model: Country, as: 'country' }]
     })
-
+    
     res.status(200).json({ success: true, user })
   } catch (error) {
     console.error("/authorized/user - ERROR:", error.message)

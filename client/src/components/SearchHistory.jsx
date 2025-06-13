@@ -34,33 +34,28 @@ export default function SearchHistory({ onSelectSearch, refreshTrigger }) {
 
   return (
     <div className="search-history">
-      {history.length > 0 && (
-        <>
-          <h3>Recent Searches</h3>
-          <div className="history-capsules">
-            {history.map((item) => (
-              <div 
-                key={item.searchId}
-                className="search-capsule"
-                onClick={() => onSelectSearch({
-                  country: item.countryId,
-                  startYear: item.startYear,
-                  endYear: item.endYear
-                })}
-              >
-                <div className="flag-container">
-                  <span className={`fi fi-${item.country.flagCode.toLowerCase()}`}></span>
-                </div>
-                <div className="capsule-content">
-                  <span className="country-name">{item.country.countryName}</span>
-                  <span className="years">{item.startYear} - {item.endYear}</span>
-                </div>
-              </div>
-            ))}
+      <h3>Recent Searches</h3>
+      <div className="history-capsules">
+        {history.map((item) => (
+          <div 
+            key={item.searchId}
+            className="search-capsule"
+            onClick={() => onSelectSearch({
+              country: item.countryId,
+              startYear: item.startYear,
+              endYear: item.endYear
+            })}
+          >
+            <div className="flag-container">
+              <span className={`fi fi-${item.country.flagCode.toLowerCase()}`}></span>
+            </div>
+            <div className="capsule-content">
+              <span className="country-name">{item.country.countryName}</span>
+              <span className="years">{item.startYear} - {item.endYear}</span>
+            </div>
           </div>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
-  
 }
