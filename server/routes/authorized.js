@@ -55,20 +55,24 @@ router.get('/search-history', async (req, res) => {
 router.get('/energy-data', async (req, res) => {
   try {
     const { countryId, startYear, endYear } = req.query;
-
-    const data = await EnergyData.findAll({
-      where: {
-        countryId,
-        year: {
-          [Sequelize.Op.between]: [startYear, endYear]
-        }
-      },
-      order: [['year', 'ASC']],
-      include: [{
-        model: Country,
-        as: 'country'
-      }]
-    });
+    await sequelize.transaction(
+      { isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED },
+      async (t) => {
+        const data = await EnergyData.findAll({
+          where: {
+            countryId,
+            year: {
+              [Sequelize.Op.between]: [startYear, endYear]
+            }
+          },
+          order: [['year', 'ASC']],
+          include: [{
+            model: Country,
+            as: 'country'
+          }]
+        });
+      }
+    )
 
     if (data.length === 0) {
       return res.status(404).json([]);
@@ -90,6 +94,7 @@ router.get('/energy-data', async (req, res) => {
   }
 });
 
+// Implements transaction isolation - serialization
 router.post('/energy-data', async (req, res) => {
   const { countryId, startYear, endYear, data } = req.body;
   const userId = req.user.userId;
