@@ -1,33 +1,57 @@
-// client/src/App.js
-import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
-import './App.css'
-import CountrySelector from './components/CountrySelector'
-import YearRangeInput from './components/YearRangeInput'
-import DataChart from './components/DataChart'
-import DataTable from './components/DataTable'
-import ExportButtons from './components/ExportButtons'
-import StatusMessage from './components/StatusMessage'
-import { fetchPopulationData, fetchEnergyData } from './services/api'
-import LoginForm from './components/auth/LoginForm'
-import RegisterForm from './components/auth/RegisterForm'
-import Navbar from './components/Navbar'
-import ProtectedRoute from './components/ProtectedRoute'
-import AuthRoute from './components/AuthRoute'
-import axios from 'axios'
-import { useAuth } from './contexts/AuthContext'
-import SearchHistory from './components/SearchHistory'
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import './App.css';
+import CountrySelector from './components/CountrySelector';
+import YearRangeInput from './components/YearRangeInput';
+import DataChart from './components/DataChart';
+import DataTable from './components/DataTable';
+import DataTransferButtons from './components/DataTransferButtons';
+import StatusMessage from './components/StatusMessage';
+import { fetchPopulationData, fetchEnergyData } from './services/api';
+import LoginForm from './components/auth/LoginForm';
+import RegisterForm from './components/auth/RegisterForm';
+import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import AuthRoute from './components/AuthRoute';
+import axios from 'axios';
+import { useAuth } from './contexts/AuthContext';
+import SearchHistory from './components/SearchHistory';
 
 function AppContent() {
-  const [country, setCountry] = useState('USA')
-  const [startYear, setStartYear] = useState(2000)
-  const [endYear, setEndYear] = useState(2020)
-  const [data, setData] = useState([])
-  const [status, setStatus] = useState(null)
-  const [hasData, setHasData] = useState(false)
-  const [refreshHistory, setRefreshHistory] = useState(false)
-  const { user } = useAuth()
+  const [country, setCountry] = useState('USA');
+  const [startYear, setStartYear] = useState(2000);
+  const [endYear, setEndYear] = useState(2020);
+  const [data, setData] = useState([]);
+  const [status, setStatus] = useState(null);
+  const [hasData, setHasData] = useState(false);
+  const [refreshHistory, setRefreshHistory] = useState(false);
+  const [triggerFetch, setTriggerFetch] = useState(false);
+  const [countries, setCountries] = useState([]);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/api/common/countries');
+        setCountries(response.data);
+      } catch (error) {
+        console.error('Error fetching countries:', error);
+        setStatus({
+          message: 'Failed to load countries list',
+          type: 'error'
+        });
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    if (triggerFetch) {
+      handleFetchData();
+      setTriggerFetch(false);
+    }
+  }, [country, startYear, endYear, triggerFetch]);
 
   const checkDatabaseForData = async () => {
     try {
@@ -39,13 +63,13 @@ function AppContent() {
         },
         withCredentials: true
       });
-      
-      if (response.data.length > 0) {
-        return response.data;
-      }
-      return null;
+      return response.data.length > 0 ? response.data : null;
     } catch (error) {
       console.error('Error checking database:', error);
+      setStatus({
+        message: 'Error checking database for existing data',
+        type: 'error'
+      });
       return null;
     }
   };
@@ -62,51 +86,89 @@ function AppContent() {
         },
         { withCredentials: true }
       );
+      setRefreshHistory(prev => !prev);
     } catch (error) {
       console.error('Error saving data to database:', error);
+      setStatus({
+        message: 'Failed to save data to database',
+        type: 'error'
+      });
     }
   };
 
-  const handleFetchData = async () => {
+  const saveSearchHistory = async () => {
+    try {
+      await axios.post(
+        'http://localhost:8080/api/authorized/energy-data/history',
+        {
+          countryId: country,
+          startYear,
+          endYear
+        },
+        { withCredentials: true }
+      );
+      setRefreshHistory(prev => !prev);
+    } catch (error) {
+      console.error('Error saving search history:', error);
+    }
+  };
+
+  const handleFetchData = async (fromHistory = false) => {
     if (startYear > endYear) {
-      setStatus({ message: 'Start year must be before end year', type: 'error' })
-      return
+      setStatus({ message: 'Start year must be before end year', type: 'error' });
+      return;
     }
 
     try {
-      setStatus({ message: 'Checking for existing data...', type: 'info' })
+      setStatus({ message: 'Checking for existing data...', type: 'info' });
       
-      // First check if data exists in our database
       const existingData = await checkDatabaseForData();
-      if (existingData) {
+      if (existingData?.length > 0) {
         setData(existingData);
-        setHasData(existingData.length > 0);
+        setHasData(true);
         setStatus({ message: 'Data loaded from database!', type: 'success' });
-        setRefreshHistory(prev => !prev);
+        
+        if (user && !fromHistory) {
+          await saveSearchHistory();
+        }
         return;
       }
 
-      setStatus({ message: 'Fetching data from external APIs...', type: 'info' })
+      setStatus({ message: 'Fetching data from external APIs...', type: 'info' });
       
-      // If not in database, fetch from external APIs
-      const populationData = await fetchPopulationData(country, startYear, endYear)
-      const energyData = await fetchEnergyData(country, startYear, endYear)
+      const [populationData, energyData] = await Promise.all([
+        fetchPopulationData(country, startYear, endYear),
+        fetchEnergyData(country, startYear, endYear)
+      ]);
       
-      const combinedData = combineData(populationData, energyData)
+      const combinedData = combineData(populationData, energyData);
       
-      // Save to database
-      if (combinedData.length > 0 && user) {
-        await saveDataToDatabase(combinedData);
+      if (combinedData.length > 0) {
+        setData(combinedData);
+        setHasData(true);
+        setStatus({ 
+          message: `Successfully loaded ${combinedData.length} records`, 
+          type: 'success' 
+        });
+        
+        if (user && !fromHistory) {
+          await saveDataToDatabase(combinedData);
+          await saveSearchHistory();
+        }
+      } else {
+        setStatus({ 
+          message: 'No data available for selected parameters', 
+          type: 'warning' 
+        });
+        setHasData(false);
       }
-      
-      setData(combinedData)
-      setHasData(combinedData.length > 0)
-      setStatus({ message: 'Data loaded successfully!', type: 'success' })
-      setRefreshHistory(prev => !prev);
     } catch (error) {
-      console.error('Error:', error)
-      setStatus({ message: `Error: ${error.message}`, type: 'error' })
-      setHasData(false)
+      console.error('Error:', error);
+      setStatus({ 
+        message: `Error: ${error.message || 'Failed to fetch data'}`,
+        type: 'error' 
+      });
+      setHasData(false);
     }
   };
 
@@ -114,64 +176,104 @@ function AppContent() {
     setCountry(search.country);
     setStartYear(search.startYear);
     setEndYear(search.endYear);
-    handleFetchData();
+    setTriggerFetch(true);
+  };
+
+  const handleDataImported = (importedData) => {
+    setData(importedData);
+    setHasData(true);
+    setStatus({ 
+      message: `Successfully imported ${importedData.length} records`, 
+      type: 'success' 
+    });
+    
+    if (importedData.length > 0) {
+      const years = importedData.map(item => parseInt(item.year));
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
+      
+      setStartYear(minYear);
+      setEndYear(maxYear);
+      
+      const firstItem = importedData[0];
+      if (firstItem.country) {
+        const countryMatch = countries.find(c => 
+          c.countryName.toLowerCase() === firstItem.country.toLowerCase()
+        );
+        if (countryMatch) {
+          setCountry(countryMatch.countryId);
+        } else {
+          setStatus({
+            message: `Country ${firstItem.country} not found in database`,
+            type: 'warning'
+          });
+        }
+      }
+    }
+  };
+
+  const handleImportError = (errorMessage) => {
+    setStatus({
+      message: `Import failed! Incorrect file format or content.`,
+      type: 'error'
+    });
   };
 
   const combineData = (populationData, energyData) => {
-    const populationMap = {};
-    populationData.forEach(item => {
-      populationMap[item.year] = item.population;
-    });
-    
-    return energyData.map(energyItem => {
-      const year = energyItem.year;
-      const population = populationMap[year];
-      const populationInMillions = population ? population / 1000000 : null;
-      
-      return {
-        year: year,
+    const populationMap = populationData.reduce((acc, item) => {
+      acc[item.year] = item.population;
+      return acc;
+    }, {});
+
+    return energyData
+      .map(energyItem => ({
+        year: energyItem.year,
         country: energyItem.country,
-        population: population,
-        populationInMillions: populationInMillions,
+        population: populationMap[energyItem.year],
+        populationInMillions: populationMap[energyItem.year] ? populationMap[energyItem.year] / 1000000 : null,
         energyConsumptionTWh: energyItem.energyConsumptionTWh,
         energyPerCapitaMWh: energyItem.energyPerCapitaMWh
-      };
-    }).filter(item => item.population !== undefined && item.energyConsumptionTWh !== undefined);
+      }))
+      .filter(item => item.population !== undefined && item.energyConsumptionTWh !== undefined);
   };
 
   return (
     <div className="container">
       <header>
         <h1>Energy Consumption vs Population Analysis</h1>
-        <p className="subtitle">Compare energy usage with population statistics across countries and years</p>
+        <p className="subtitle">Compare energy usage with population statistics</p>
       </header>
       
       <div className="app-content">
-        {user && <SearchHistory onSelectSearch={handleSelectSearch}
-          refreshTrigger={refreshHistory}/>}
+        {user && (
+          <SearchHistory 
+            onSelectSearch={handleSelectSearch} 
+            refreshTrigger={refreshHistory}
+          />
+        )}
+        
         <div className="controls-section">
-          <h3>Search</h3>
+          <h3>Search Parameters</h3>
           <div className="controls">
             <CountrySelector 
               value={country} 
               onChange={setCountry} 
+              countries={countries} 
             />
-            
             <YearRangeInput 
               startYear={startYear}
               endYear={endYear}
               onStartYearChange={setStartYear}
               onEndYearChange={setEndYear}
             />
-            
             <button 
               className="primary-btn" 
-              onClick={handleFetchData}
+              onClick={() => handleFetchData()}
+              disabled={!countries.length}
             >
               Fetch Data
             </button>
           </div>
-
         </div>
 
         <div className="results-section">
@@ -181,13 +283,17 @@ function AppContent() {
             <>
               <DataChart data={data} />
               <DataTable data={data} />
-              <ExportButtons data={data} />
+              <DataTransferButtons 
+                data={data} 
+                onDataImported={handleDataImported}
+                onImportError={handleImportError}
+              />
             </>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function App() {
@@ -214,7 +320,7 @@ function App() {
         </Routes>
       </AuthProvider>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

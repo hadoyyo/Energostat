@@ -120,6 +120,7 @@ button {
     gap: 8px;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-icon {
@@ -157,25 +158,25 @@ button {
 }
 
 .chart-container {
-    margin: 40px 0;
     height: 500px;
-    padding: 20px;
+    padding: 10px 20px;
     border-radius: 8px;
 }
 
 .data-display {
-    margin-top: 40px;
+    margin-top: 50px;
     padding: 20px;
     border-radius: 8px;
 }
 
 .table-container {
     overflow-x: auto;
-    margin: 30px 0;
+    margin: 20px 0;
     border-radius: 12px;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 table {
@@ -201,6 +202,7 @@ th {
     text-transform: uppercase;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
+        color:  var(--primary-color);
 }
 
 td {
@@ -242,8 +244,7 @@ tr:nth-child(even):hover {
 }
 
 .export-options {
-    margin-top: 40px;
-    padding: 20px;
+    padding: 0 20px;
     border-radius: 8px;
 }
 
@@ -267,6 +268,8 @@ tr:nth-child(even):hover {
     border: none;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-left: 1rem;
 }
 
 .status.info {
@@ -321,7 +324,7 @@ tr:nth-child(even):hover {
 .custom-select .selected-option {
     background: rgba(255, 255, 255, 0.4);
     padding: 10px 12px;
-    border: 1px solid transparent; /* Usuwa standardową ramkę */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-radius: 20px; /* Zaokrąglenie jak w innych inputach */
     cursor: pointer;
     transition: all 0.3s;
@@ -411,10 +414,6 @@ tr:nth-child(even):hover {
     
     .input-range {
         width: 100%;
-        flex-direction: column;
-    }
-    
-    .export-buttons {
         flex-direction: column;
     }
     
@@ -569,6 +568,28 @@ backdrop-filter: blur(5px);
 
 }
 
+.auth-form .input-group input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.4);
+  box-sizing: border-box;
+  border-color: transparent;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.input-range .input-group input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.4);
+  box-sizing: border-box;
+  border-color: transparent;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* Dla responsywności */
 @media (max-width: 768px) {
   .auth-form {
@@ -598,6 +619,12 @@ h3 {
   margin-bottom: 1rem;
 }
 
+h4 {
+  color: var(--dark-color);
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+}
+
 .history-capsules {
   display: flex;
   flex-wrap: wrap;
@@ -615,6 +642,7 @@ h3 {
   gap: 0.5rem;
   padding: 0.6rem 1rem;
   background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 2rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -649,4 +677,121 @@ h3 {
   font-size: 0.8rem;
   color: var(--dark-color);
   opacity: 0.8;
+}
+
+/* Poprawki dla małych rozdzielczości */
+@media (max-width: 768px) {
+  .controls-section {
+    padding: 0; /* Usuwamy niepotrzebne paddingi */
+  }
+
+  .status {
+    margin-left: 0; /* Usuwamy przesunięcie w lewo */
+    margin-top: 15px;;
+    padding: 15px; /* Zwiększamy padding dla lepszej czytelności */
+  }
+  
+  
+  .controls {
+    margin: 0; /* Zerujemy marginesy */
+    padding: 0; /* Zerujemy paddingi */
+    gap: 15px; /* Stały odstęp między elementami */
+  }
+  
+  .input-group {
+    margin: 0; /* Usuwamy marginesy */
+    padding: 0; /* Usuwamy paddingi */
+  }
+  
+  /* Wybór państwa - usuwanie przesunięcia */
+  .country-selector-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Zakres dat - zmniejszenie odstępów */
+  .year-range-input-container {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .input-range {
+    margin: 0;
+    padding: 0;
+    gap: 15px; /* Mniejszy odstęp między inputami roku */
+  }
+  
+  /* Przycisk Fetch Data */
+  .fetch-data-button {
+    width: 100%;
+    margin-top: 0; /* Usuwamy górny margines */
+  }
+  
+  /* Nagłówek sekcji */
+  .controls-section h3 {
+    padding-left: 0;
+    margin-bottom: 15px; /* Mniejszy odstęp pod nagłówkiem */
+  }
+}
+
+/* Dodatkowe poprawki dla bardzo małych ekranów */
+@media (max-width: 480px) {
+  .controls {
+    gap: 12px; /* Jeszcze mniejszy odstęp */
+  }
+  
+  .input-range {
+    gap: 12px;
+  }
+  
+  /* Jednolity padding dla kontenera głównego */
+  .container {
+    padding: 20px;
+  }
+  
+  /* Lepsze wyrównanie całej sekcji kontrolek */
+  .controls-section {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+.import-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.import-btn {
+  padding: 12px 20px;
+  background: var(--success-color);
+  color: white;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  font-family: SEGO UI, sans-serif;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.import-btn:hover {
+  background: var(--success-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .export-buttons, .import-buttons {
+    flex-direction: column;
+  }
+  
+  .export-btn, .import-btn {
+    justify-content: center;
+  }
 }
