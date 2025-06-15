@@ -41,15 +41,13 @@ export default function SearchHistory({ onSelectSearch, refreshTrigger }) {
     })
   }
 
-  if (!user) return null
+  if (!user || history.length === 0) return null
 
   return (
     <div className="search-history">
       <h3>Recent Searches</h3>
       {loading ? (
         <div>Loading...</div>
-      ) : history.length === 0 ? (
-        <div>No searches yet</div>
       ) : (
         <div className="history-capsules">
           {history.map(item => (

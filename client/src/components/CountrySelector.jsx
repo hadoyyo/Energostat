@@ -1,4 +1,3 @@
-// client/src/components/CountrySelector.jsx
 import { useState, useEffect } from 'react';
 import 'flag-icons/css/flag-icons.min.css';
 import axios from 'axios';

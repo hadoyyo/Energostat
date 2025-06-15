@@ -1,4 +1,3 @@
-// server/routes/common.js
 require('dotenv').config()
 const router = require('express').Router()
 const bcrypt = require('bcrypt')
@@ -19,22 +18,11 @@ router.get('/countries', async (req, res) => {
   }
 });
 
-// test
-router.get('/test', async (req, res) => {
-  try {
-    console.log('/test - SUCCESS')
-    res.status(200).json({ success: true, message: "Works!" })
-  } catch (error) {
-    console.error('/test - ERROR')
-    res.status(500).json({ success: false, message: "Internal server error." })
-  }
-})
-
-// create new account
+// Register new user
 router.post('/register', async (req, res) => {
   try {
     const { firstName, lastName, email, password, countryId } = req.body
-    const error = {};
+    const errors = {};
 
     const validateEmail = (email) => {
       return String(email)
@@ -44,38 +32,46 @@ router.post('/register', async (req, res) => {
         );
     };
 
-    // check if user exists
-    const existingUser = await AppUser.findOne({ where: { email: email } })
+    const existingUser = await AppUser.findOne({ where: { email } })
     if (existingUser) {
-      return res.json({ success: false, message: "User with this email already exists." })
+      return res.status(400).json({ 
+        success: false, 
+        message: "User with this email already exists." 
+      })
     }
 
-    // check if country exists
-    const country = await Country.findOne({ where: { countryId: countryId } })
+    // Check if country exists
+    const country = await Country.findOne({ where: { countryId } })
     if (!country) {
-      return res.json({ success: false, message: "Country does not exist." })
+      return res.status(400).json({ 
+        success: false, 
+        message: "Selected country does not exist." 
+      })
     }
 
-    // validate user data
+    // Validate user data
     if (firstName.trim().length < 3) {
-      error[firstName] = "First name is too short."
+      errors.firstName = "First name must be at least 3 characters long."
     }
     if (lastName.trim().length < 3) {
-      error[lastName] = "Last name is too short."
+      errors.lastName = "Last name must be at least 3 characters long."
     }
     if (!validateEmail(email.trim())) {
-      error[email] = "Email is invalid."
+      errors.email = "Please enter a valid email address."
     }
     if (password.trim().length < 6) {
-      error[password] = "Password is too short."
+      errors.password = "Password must be at least 6 characters long."
     }
 
-    // check errors
-    if (Object.keys(error).length > 0) {
-      return res.status(400).json({ success: false, message: error })
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Validation failed",
+        errors 
+      })
     }
 
-    // hash password
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, Number(process.env.SALT))
     const newUser = await AppUser.create({
       firstName,
@@ -85,10 +81,9 @@ router.post('/register', async (req, res) => {
       countryId
     })
 
-    console.log("/register - SUCCESS")
     res.status(201).json({ 
       success: true, 
-      message: "User created successfully.",
+      message: "Registration successful!",
       user: {
         userId: newUser.userId,
         firstName: newUser.firstName,
@@ -100,31 +95,37 @@ router.post('/register', async (req, res) => {
 
   } catch (error) {
     console.error("/register - ERROR:", error.message)
-    res.status(500).json({ success: false, message: "Internal server error.", error: error.message })
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal server error",
+      error: error.message 
+    })
   }
 })
 
-// login user
+// Login user
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body
 
-    // check if user exists
     const user = await AppUser.findOne({ where: { email } })
     if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" })
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid email or password" 
+      })
     }
 
-    // check password
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" })
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid email or password" 
+      })
     }
 
-    // generate token
     const token = generateToken(user)
 
-    // set httpOnly cookie
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -132,7 +133,6 @@ router.post('/login', async (req, res) => {
       maxAge: 3600000 // 1 hour
     })
 
-    console.log("/login - SUCCESS")
     res.status(200).json({ 
       success: true, 
       message: "Login successful",
@@ -147,23 +147,31 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error("/login - ERROR:", error.message)
-    res.status(500).json({ success: false, message: "Internal server error" })
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal server error" 
+    })
   }
 })
 
-// logout user
+// Logout user
 router.post('/logout', async (req, res) => {
   try {
     res.clearCookie('token')
-    console.log("/logout - SUCCESS")
-    res.status(200).json({ success: true, message: "Logout successful" })
+    res.status(200).json({ 
+      success: true, 
+      message: "Logout successful" 
+    })
   } catch (error) {
     console.error("/logout - ERROR:", error.message)
-    res.status(500).json({ success: false, message: "Internal server error" })
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal server error" 
+    })
   }
 })
 
-// check auth status
+// Check auth status
 router.get('/check-auth', async (req, res) => {
   try {
     const token = req.cookies.token

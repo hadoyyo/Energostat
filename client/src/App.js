@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { gsap } from 'gsap';
 import './App.css';
 import CountrySelector from './components/CountrySelector';
 import YearRangeInput from './components/YearRangeInput';
@@ -17,6 +18,7 @@ import AuthRoute from './components/AuthRoute';
 import axios from 'axios';
 import { useAuth } from './contexts/AuthContext';
 import SearchHistory from './components/SearchHistory';
+import HomePage from './components/HomePage';
 
 function AppContent() {
   const [country, setCountry] = useState('USA');
@@ -29,6 +31,9 @@ function AppContent() {
   const [triggerFetch, setTriggerFetch] = useState(false);
   const [countries, setCountries] = useState([]);
   const { user } = useAuth();
+
+  const titleRef = useRef(null);
+  const contentRef = useRef(null);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -44,6 +49,34 @@ function AppContent() {
       }
     };
     fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    const timeline = gsap.timeline({ defaults: { ease: "power2.out" } });
+
+    if (titleRef.current) {
+      const letters = titleRef.current.querySelectorAll('span');
+      timeline.fromTo(letters,
+        { opacity: 0, y: 20 },
+        { 
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.03,
+        });
+    }
+
+    if (contentRef.current) {
+      timeline.fromTo(contentRef.current,
+        { opacity: 0, scale: 0.98 },
+        { 
+          opacity: 1, 
+          scale: 1,
+          duration: 0.5 
+        }, "-=0.3");
+    }
+
+    return () => timeline.kill();
   }, []);
 
   useEffect(() => {
@@ -237,14 +270,27 @@ function AppContent() {
       .filter(item => item.population !== undefined && item.energyConsumptionTWh !== undefined);
   };
 
+  const renderSplitText = (text) => {
+  return text.split(' ').map((word, wordIndex) => (
+    <span key={wordIndex} style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
+      {word.split('').map((char, charIndex) => (
+        <span key={charIndex} style={{ display: 'inline-block' }}>
+          {char}
+        </span>
+      ))}
+      {wordIndex < text.split(' ').length - 1 ? '\u00A0' : ''}
+    </span>
+  ))
+}
+
   return (
     <div className="container">
-      <header>
-        <h1>Energy Consumption vs Population Analysis</h1>
-        <p className="subtitle">Compare energy usage with population statistics</p>
+      <header ref={titleRef}>
+        <h1>{renderSplitText("Energy Consumption vs Population Analysis")}</h1>
+        <p className="subtitle">{renderSplitText("Compare energy usage with population statistics")}</p>
       </header>
       
-      <div className="app-content">
+      <div ref={contentRef} className="app-content">
         {user && (
           <SearchHistory 
             onSelectSearch={handleSelectSearch} 
@@ -267,7 +313,7 @@ function AppContent() {
               onEndYearChange={setEndYear}
             />
             <button 
-              className="primary-btn" 
+              className="primary-btn auth-btn" 
               onClick={() => handleFetchData()}
               disabled={!countries.length}
             >
@@ -302,21 +348,15 @@ function App() {
       <AuthProvider>
         <Navbar />
         <Routes>
-          <Route path="/login" element={
-            <AuthRoute>
-              <LoginForm />
-            </AuthRoute>
-          } />
-          <Route path="/register" element={
-            <AuthRoute>
-              <RegisterForm />
-            </AuthRoute>
-          } />
+          <Route path="/login" element={<AuthRoute><LoginForm /></AuthRoute>} />
+          <Route path="/register" element={<AuthRoute><RegisterForm /></AuthRoute>} />
           <Route path="/" element={
-            <ProtectedRoute>
-              <AppContent />
-            </ProtectedRoute>
+            <>
+              <HomePage />
+              <ProtectedRoute><AppContent /></ProtectedRoute>
+            </>
           } />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </Router>

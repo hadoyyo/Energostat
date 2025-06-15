@@ -1,4 +1,3 @@
-// src/services/api.js
 const EMBER_API_KEY = 'aaaf2478-5c98-4044-ac8d-bdcf43f5ec67';
 
 export async function fetchPopulationData(countryCode, startYear, endYear) {

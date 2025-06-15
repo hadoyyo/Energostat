@@ -64,23 +64,28 @@ export const AuthProvider = ({ children }) => {
   }
 
   const register = async (userData) => {
-    try {
-      const response = await axios.post(
-        'http://localhost:8080/api/common/register',
-        userData
-      )
+  try {
+    const response = await axios.post(
+      'http://localhost:8080/api/common/register',
+      userData
+    )
 
-      if (response.data.success) {
-        return { success: true }
-      }
-    } catch (error) {
-      console.error('Registration failed:', error)
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Registration failed' 
-      }
+    if (response.data.success) {
+      return { success: true }
+    }
+    return {
+      success: false,
+      message: response.data.message || 'Registration failed'
+    }
+  } catch (error) {
+    console.error('Registration failed:', error)
+    return { 
+      success: false, 
+      message: error.response?.data?.message || 
+        (error.response?.data?.errors ? 'Validation failed' : 'Registration failed') 
     }
   }
+}
 
   return (
     <AuthContext.Provider 

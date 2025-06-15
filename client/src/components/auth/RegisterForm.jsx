@@ -1,7 +1,7 @@
-// client/src/components/auth/RegisterForm.jsx
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { gsap } from 'gsap'
 import CountrySelector from '../CountrySelector'
 
 export default function RegisterForm() {
@@ -15,6 +15,43 @@ export default function RegisterForm() {
   const [errors, setErrors] = useState({})
   const { register } = useAuth()
   const navigate = useNavigate()
+
+  const titleRef = useRef(null)
+  const formRef = useRef(null)
+  const errorRef = useRef(null)
+  const buttonRef = useRef(null)
+  const linkRef = useRef(null)
+  const countrySelectorRef = useRef(null)
+
+  useEffect(() => {
+    const timeline = gsap.timeline({ defaults: { ease: "power2.out" } });
+
+    // Animacja tytułu
+    if (titleRef.current) {
+      const letters = titleRef.current.querySelectorAll('span');
+      timeline.fromTo(letters,
+        { opacity: 0, y: 20 },
+        { 
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.03,
+        });
+    }
+
+    // Animacja formularza
+    if (formRef.current) {
+      timeline.fromTo(formRef.current,
+        { opacity: 0, scale: 0.98 },
+        { 
+          opacity: 1, 
+          scale: 1,
+          duration: 0.5 
+        }, "-=0.3");
+    }
+
+    return () => timeline.kill();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -32,25 +69,59 @@ export default function RegisterForm() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setErrors({})
-    
+  e.preventDefault()
+  setErrors({})
+  
+  try {
     const result = await register(formData)
     if (!result.success) {
-      if (result.message) {
-        setErrors({ general: result.message })
+      setErrors({ 
+        general: result.message || 'Registration failed' 
+      })
+      
+      if (errorRef.current) {
+        gsap.fromTo(errorRef.current,
+          { x: -10, opacity: 0 },
+          { x: 0, opacity: 1, duration: 0.4 })
       }
       return
     }
     
     navigate('/login')
+  } catch (error) {
+    setErrors({ 
+      general: 'An unexpected error occurred. Please try again.' 
+    })
+    
+    if (errorRef.current) {
+      gsap.fromTo(errorRef.current,
+        { x: -10, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.4 })
+    }
+  }
+}
+
+  const renderSplitText = (text) => {
+    return text.split('').map((char, index) => (
+      <span key={index} style={{ display: 'inline-block' }}>
+        {char === ' ' ? '\u00A0' : char}
+      </span>
+    ))
   }
 
   return (
     <div className="auth-form">
-      <h2>Register</h2>
-      {errors.general && <div className="status error">{errors.general}</div>}
-      <form onSubmit={handleSubmit}>
+      <h2 ref={titleRef} className="auth-title">
+        {renderSplitText("Register")}
+      </h2>
+      
+      {errors.general && (
+        <div ref={errorRef} className="status error">
+          {errors.general}
+        </div>
+      )}
+      
+      <form ref={formRef} onSubmit={handleSubmit}>
         <div className="input-group">
           <label htmlFor="firstName">First Name:</label>
           <input
@@ -61,6 +132,7 @@ export default function RegisterForm() {
             onChange={handleChange}
             required
             minLength="3"
+            autoComplete="given-name"
           />
           {errors.firstName && <span className="error-text">{errors.firstName}</span>}
         </div>
@@ -75,6 +147,7 @@ export default function RegisterForm() {
             onChange={handleChange}
             required
             minLength="3"
+            autoComplete="family-name"
           />
           {errors.lastName && <span className="error-text">{errors.lastName}</span>}
         </div>
@@ -88,6 +161,7 @@ export default function RegisterForm() {
             value={formData.email}
             onChange={handleChange}
             required
+            autoComplete="email"
           />
           {errors.email && <span className="error-text">{errors.email}</span>}
         </div>
@@ -102,18 +176,28 @@ export default function RegisterForm() {
             onChange={handleChange}
             required
             minLength="6"
+            autoComplete="new-password"
           />
           {errors.password && <span className="error-text">{errors.password}</span>}
         </div>
         
-        <CountrySelector 
-          value={formData.countryId}
-          onChange={handleCountryChange}
-        />
+        <div ref={countrySelectorRef}>
+          <CountrySelector 
+            value={formData.countryId}
+            onChange={handleCountryChange}
+          />
+        </div>
         
-        <button type="submit" className="primary-btn auth-btn">
+        <button 
+          ref={buttonRef} 
+          type="submit" 
+          className="primary-btn auth-btn"
+        >
           Register
         </button>
+        <div ref={linkRef} className="auth-link">
+          Already have an account? <Link to="/login">Login</Link>
+        </div>
       </form>
     </div>
   )
